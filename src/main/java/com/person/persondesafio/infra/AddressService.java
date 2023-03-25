@@ -1,4 +1,4 @@
-package com.person.persondesafio.core.infra;
+package com.person.persondesafio.infra;
 
 import com.person.persondesafio.core.entities.Address;
 import com.person.persondesafio.core.services.AddressInfra;
