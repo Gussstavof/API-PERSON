@@ -1,17 +1,18 @@
 package com.person.persondesafio.infra;
 
 import com.person.persondesafio.core.entities.Address;
-import com.person.persondesafio.core.services.AddressInfra;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-public class AddressService implements AddressInfra {
-
-    public Address validationAddress(Address address){
+public class ApiCepAddressService implements AddressInfra{
+    @Override
+    public Address validationAddress(Address address) {
         String number = address.getNumero();
         boolean main = address.isMain();
-        address = restEndereco(address.getCep());
+        address = restAddress(address.getCep());
         if (address.getLogradouro() == null){
             return null;
         }
@@ -21,12 +22,9 @@ public class AddressService implements AddressInfra {
         return address;
     }
 
-
-    private Address restEndereco(final String cep){
+    private Address restAddress(final String cep){
         RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject("http://viacep.com.br/ws/"+cep+"/json/",
+        return restTemplate.getForObject("https://cdn.apicep.com/file/apicep/"+cep+".json",
                 Address.class);
     }
-
-
 }

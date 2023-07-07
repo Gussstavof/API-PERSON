@@ -7,6 +7,7 @@ import com.person.persondesafio.core.entities.dto.Mapper;
 import com.person.persondesafio.core.entities.dto.PersonDto;
 import com.person.persondesafio.core.exceptions.NotFoundException;
 import com.person.persondesafio.core.repositories.PersonRepository;
+import com.person.persondesafio.infra.AddressInfra;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

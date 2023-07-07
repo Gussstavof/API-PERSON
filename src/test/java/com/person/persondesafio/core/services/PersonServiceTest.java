@@ -6,6 +6,7 @@ import com.person.persondesafio.core.entities.dto.AddressDto;
 import com.person.persondesafio.core.entities.dto.Mapper;
 import com.person.persondesafio.core.entities.dto.PersonDto;
 import com.person.persondesafio.core.repositories.PersonRepository;
+import com.person.persondesafio.infra.AddressInfra;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
