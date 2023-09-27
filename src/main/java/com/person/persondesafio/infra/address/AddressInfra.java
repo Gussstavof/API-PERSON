@@ -1,8 +1,9 @@
-package com.person.persondesafio.infra;
+package com.person.persondesafio.infra.address;
 
 import com.person.persondesafio.core.entities.Address;
+import com.person.persondesafio.core.services.AddressService;
 
-public abstract class AddressInfra {
+public abstract class AddressInfra implements AddressService {
 
     public Address validationAddress(Address address) {
         String number = address.getNumero();

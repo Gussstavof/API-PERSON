@@ -1,12 +1,12 @@
 package com.person.persondesafio.core.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.person.persondesafio.core.entities.Address;
-import com.person.persondesafio.core.entities.dto.AddressDto;
-import com.person.persondesafio.core.entities.dto.PersonDto;
+import com.person.persondesafio.core.requests.AddressRequest;
+import com.person.persondesafio.core.requests.PersonRequest;
+import com.person.persondesafio.core.responses.AddressResponse;
+import com.person.persondesafio.core.responses.PersonResponse;
 import com.person.persondesafio.core.services.PersonService;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +22,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
@@ -34,17 +34,14 @@ class PersonControllerTest {
 
     @Autowired
     private PersonController personController;
-
     @MockBean
     PersonService personService;
-
     @Autowired
     MockMvc mockMvc;
-
     @Autowired
     ObjectMapper objectMapper;
-
-    PersonDto personDto;
+    PersonRequest personRequest;
+    PersonResponse personResponse;
 
     Address address;
 
@@ -63,61 +60,69 @@ class PersonControllerTest {
                 .logradouro("Rua da sé")
                 .build();
 
-        personDto = PersonDto.builder()
-                .id(2L)
+        personRequest = PersonRequest.builder()
                 .name("Gustavo")
                 .birthdate(LocalDate.parse("2003-11-12"))
                 .address(Collections.singleton(address))
+                .build();
+
+        personResponse = PersonResponse.builder()
+                .id(2L)
+                .name("Gustavo")
+                .birthdate(LocalDate.parse("2003-11-12"))
+                .address(new LinkedHashSet<>(Collections.singleton(new AddressResponse(address))))
                 .build();
     }
 
     @Test
     void personDtoResponseEntityCreate() throws Exception {
-        when(personService.savePerson(personDto))
-                .thenReturn(personDto);
+        when(personService.save(personRequest))
+                .thenReturn(personResponse);
 
-        mockMvc.perform(post("/person")
+        mockMvc.perform(post("/people")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(personDto)))
+                        .content(objectMapper.writeValueAsString(personResponse)))
                 .andExpect(MockMvcResultMatchers.status().isCreated());
     }
 
     @Test
     void personResponseEntityPut() throws Exception {
-        when(personService.updatePerson(2L, personDto))
-                .thenReturn(personDto);
+        personRequest.setName("Ferreira");
+        personResponse.setName("Ferreira");
+        when(personService.update(2L, personRequest))
+                .thenReturn(personResponse);
 
-        mockMvc.perform(put("/person/2")
+        mockMvc.perform(put("/people/2")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(personDto)))
+                        .content(objectMapper.writeValueAsString(personResponse)))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     void personResponseEntityGetById() throws Exception {
         when(personService.getPersonById(2L))
-                .thenReturn(personDto);
+                .thenReturn(personResponse);
 
-        mockMvc.perform(get("/person/2")
+        mockMvc.perform(get("/people/2")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(personDto)))
+                        .content(objectMapper.writeValueAsString(personResponse)))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     void personResponseEntityGetAll() throws Exception {
         when(personService.findAllPerson())
-                .thenReturn(Collections.singletonList(personDto));
+                .thenReturn(Collections.singletonList(personResponse));
 
-        mockMvc.perform(get("/person")
+        mockMvc.perform(get("/people")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(personDto)))
+                        .content(objectMapper.writeValueAsString(personResponse)))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     void personDtoResponseEntityAddAddress() throws Exception {
-        var newAddress = AddressDto.builder()
+        var newAddress = AddressRequest.builder()
                 .cep("111111")
                 .uf("sp")
                 .bairro("vila madalena")
@@ -127,22 +132,22 @@ class PersonControllerTest {
                 .build();
 
         when(personService.addAddress(2L, newAddress))
-                .thenReturn(personDto);
+                .thenReturn(personResponse);
 
-        mockMvc.perform(patch("/person/add/1")
+        mockMvc.perform(patch("/people/add/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(personDto)))
+                        .content(objectMapper.writeValueAsString(personResponse)))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     void personDtoResponseEntityDeleteAddress() throws Exception {
         when(personService.deleteAddress(2L, 4L))
-                .thenReturn(personDto);
+                .thenReturn(personResponse);
 
-        mockMvc.perform(delete("/person/delete?idPerson=1&idAddress=2")
+        mockMvc.perform(delete("/people/delete?idPerson=1&idAddress=2")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(personDto)))
+                        .content(objectMapper.writeValueAsString(personResponse)))
                 .andExpect(MockMvcResultMatchers.status().isOk());
     }
 }

@@ -2,21 +2,24 @@ package com.person.persondesafio.core.services;
 
 import com.person.persondesafio.core.entities.Address;
 import com.person.persondesafio.core.entities.Person;
-import com.person.persondesafio.core.entities.dto.AddressDto;
-import com.person.persondesafio.core.entities.dto.Mapper;
-import com.person.persondesafio.core.entities.dto.PersonDto;
+import com.person.persondesafio.core.exceptions.NotFoundException;
 import com.person.persondesafio.core.repositories.PersonRepository;
-import com.person.persondesafio.infra.AddressInfra;
+import com.person.persondesafio.core.requests.AddressRequest;
+import com.person.persondesafio.core.requests.PersonRequest;
+import com.person.persondesafio.core.responses.AddressResponse;
+import com.person.persondesafio.core.responses.PersonResponse;
+import com.person.persondesafio.infra.address.AddressInfra;
+import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -24,127 +27,141 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
 class PersonServiceTest {
-
+    @Mock
+    private PersonRepository personRepository;
+    @Mock
+    private AddressService addressService;
     @InjectMocks
-    PersonService personService;
+    private PersonService personService;
 
-    @Mock
-    AddressInfra addressInfra;
-
-    @Mock
-    PersonRepository personRepository;
-
-    @Mock
-    Mapper mapper;
-
-    PersonDto personDto;
-
+    PersonRequest request;
     Person person;
 
-    AddressDto addressDto;
-
-    Address address;
-
     @BeforeEach
-    public void setUp() {
-        addressDto = AddressDto.builder()
-                .id(4L)
-                .cep("000000")
-                .uf("sp")
-                .bairro("sé")
-                .localidade("São Paulo")
-                .main(true)
-                .logradouro("Rua da sé")
-                .build();
-
-        address = Address.builder()
-                .id(4L)
-                .cep("000000")
-                .uf("sp")
-                .bairro("sé")
-                .localidade("São Paulo")
-                .main(true)
-                .logradouro("Rua da sé")
-                .build();
-
-        personDto = PersonDto.builder()
-                .id(2L)
-                .name("Gustavo")
-                .birthdate(LocalDate.parse("2003-11-12"))
-                .address(Collections.singleton(address))
-                .build();
-        person = Person.builder()
-                .id(2L)
-                .name("Gustavo")
-                .birthdate(LocalDate.parse("2003-11-12"))
-                .address(Collections.singleton(address))
-                .build();
-
-        when(mapper.toPersonDto(person))
-                .thenReturn(personDto);
-        when(mapper.toPerson(personDto))
-                .thenReturn(person);
-        when(mapper.toPersonDto(Collections.singletonList(person)))
-                .thenReturn(Collections.singletonList(personDto));
-        when(mapper.toAddressDto(address))
-                .thenReturn(addressDto);
-        when(mapper.toAddress(addressDto))
-                .thenReturn(address);
-        when(addressInfra.validationAddress(address))
-                .thenReturn(address);
+    void setup() {
+        request = new PersonRequest();
+        person = new Person();
     }
 
+
     @Test
-    void savePerson() {
-        when(personRepository.save(person))
+    public void testSavePerson() {
+        when(addressService.validationAddress(any()))
+                .thenReturn(new Address());
+        when(personRepository.save(any()))
                 .thenReturn(person);
 
-        var result = personService.savePerson(personDto);
+        PersonResponse result = personService.save(request);
 
-        assertSame(personDto, result);
+        assertEquals(result, new PersonResponse(person));
     }
 
     @Test
-    void updatePerson() {
-        when(personRepository.findById(2L))
-                .thenReturn(Optional.ofNullable(person));
-        when(personRepository.save(person))
-                .thenReturn(person);
+    public void testUpdatePerson() {
+        Long personId = 1L;
+        Person existingPerson = new Person();
 
-        var result = personService.updatePerson(2L, personDto);
+        when(personRepository.findById(personId))
+                .thenReturn(Optional.of(existingPerson));
+        when(addressService.validationAddress(any()))
+                .thenReturn(new Address());
+        when(personRepository.save(any()))
+                .thenReturn(existingPerson);
 
-        assertEquals(personDto, result);
+        PersonResponse result = personService.update(personId, request);
+
+        assertEquals(result, new PersonResponse(existingPerson));
     }
 
     @Test
-    void getPersonById() {
-        when(personRepository.findById(2L))
-                .thenReturn(Optional.ofNullable(person));
+    public void testUpdatePersonNotFound() {
+        Long personId = 1L;
 
-        var result = personService.getPersonById(2L);
+        when(personRepository.findById(personId))
+                .thenReturn(Optional.empty());
 
-        assertEquals(personDto, result);
+        assertThrows(NotFoundException.class, () -> personService.update(personId, request));
     }
 
     @Test
-    void findAllPerson() {
+    public void testGetPersonById() {
+        Long personId = 1L;
+
+        when(personRepository.findById(personId))
+                .thenReturn(Optional.of(person));
+
+        PersonResponse result = personService.getPersonById(personId);
+
+        assertEquals(result, new PersonResponse(person));
+    }
+
+    @Test
+    public void testGetPersonByIdNotFound() {
+        Long personId = 1L;
+
+        when(personRepository.findById(personId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> personService.getPersonById(personId));
+    }
+
+    @Test
+    public void testFindAllPersons() {
+        List<Person> personList = new ArrayList<>();
+        personList.add(new Person());
+
         when(personRepository.findAll())
-                .thenReturn(Collections.singletonList(person));
+                .thenReturn(personList);
 
-        var result = personService.findAllPerson();
+        List<PersonResponse> responseList = personService.findAllPerson();
 
-        assertEquals(Collections.singletonList(personDto), result);
+        assertEquals(personList.size(), responseList.size());
     }
 
-
-    //UnsupportedOperationException
     @Test
-    void addAddress() {
+    public void testAddAddress() {
+        Long personId = 1L;
+        AddressRequest addressRequest = new AddressRequest();
 
+        when(personRepository.findById(personId))
+                .thenReturn(Optional.of(person));
+        when(addressService.validationAddress(any()))
+                .thenReturn(new Address());
+        when(personRepository.save(any()))
+                .thenReturn(person);
+
+        PersonResponse result = personService.addAddress(personId, addressRequest);
+
+        assertEquals(result, new PersonResponse(person));
     }
 
-    //UnsupportedOperationException
     @Test
-    void deleteAddress() {
+    public void testDeleteAddress() {
+        Long personId = 1L;
+        Long addressId = 2L;
+        Address address = new Address();
+        address.setId(addressId);
+        person.getAddress().add(address);
+
+        when(personRepository.findById(personId))
+                .thenReturn(Optional.of(person));
+        when(personRepository.save(any()))
+                .thenReturn(person);
+
+        PersonResponse result = personService.deleteAddress(personId, addressId);
+
+        assertEquals(result, new PersonResponse(person));
+        assertEquals(0, person.getAddress().size());
+    }
+
+    @Test
+    public void testDeleteAddressNotFound() {
+        Long personId = 1L;
+        Long addressId = 2L;
+
+        when(personRepository.findById(personId))
+                .thenThrow(NotFoundException.class);
+
+        assertThrows(NotFoundException.class, () -> personService.deleteAddress(personId, addressId));
     }
 }

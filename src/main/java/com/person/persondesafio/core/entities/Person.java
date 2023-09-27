@@ -6,8 +6,7 @@ import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Data
 @AllArgsConstructor
@@ -28,6 +27,6 @@ public class Person {
     @NotBlank
     @OneToMany(cascade=CascadeType.PERSIST)
     @JoinColumn(name = "person_id")
-    private Set<Address> address = new HashSet<>();
+    private LinkedHashSet<Address> address = new LinkedHashSet<>();
 
 }
